@@ -1,4 +1,8 @@
+import 'package:flappybird/score_board.dart';
+import 'package:flappybird/start.dart';
 import 'package:flutter/material.dart';
+
+import 'bird.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,56 +32,96 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+const double gapSize = 0.5;
+
 class _MyHomePageState extends State<MyHomePage> {
   double birdY = 0;
+  bool isRunning = false;
+  double pipeSize = 300;
+  double pipeOneX = 0.9;
+  double gapOneCenter = 0.2;
+  double gapTwoCenter = 0;
+  double pipeTwoX = 0.3;
+  // double pipeY = -1;
 
-  onJumpEnd(){
+  onJumpEnd() {
     setState(() {
       birdY = 1;
     });
   }
 
+  startGame() {
+    setState(() {
+      isRunning = true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    
+    final maxHeight = MediaQuery.of(context).size.height * 3 /4;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
       body: GestureDetector(
-        onTap: (){
+        onTap: () {
           setState(() {
             birdY -= 0.5;
           });
         },
-        child: Bird(birdY: birdY, onEnd: onJumpEnd,),
+        child: isRunning
+            ? Column(
+                children: [
+                  Expanded(
+                      flex: 3,
+                      child: Stack(children: [
+                        Pipe(pipeX: pipeOneX, pipeY: -1, pipeSize: maxHeight * (gapOneCenter - 0.25 + 1)/2 ),
+                        Pipe(pipeX: pipeOneX, pipeY: 1, pipeSize: maxHeight *(1-(gapOneCenter + 0.25))/2),
+                        Pipe(pipeX: pipeTwoX, pipeY: -1, pipeSize: maxHeight * (gapTwoCenter - 0.25 + 1)/2),
+                        Pipe(pipeX: pipeTwoX, pipeY: 1, pipeSize: maxHeight *(1-(gapOneCenter + 0.25))/2),
+                        Bird(birdY: birdY, onEnd: onJumpEnd),
+                      ])),
+                  Expanded(
+                    flex: 1,
+                    child: ScoreBoard(),
+                  ),
+                ],
+              )
+            : GestureDetector(
+                onTap: () {
+                  startGame();
+                },
+                child: StartScreen(),
+              ),
       ),
       backgroundColor: Colors.white,
     );
   }
 }
 
-class Bird extends StatelessWidget {
-  const Bird({
+class Pipe extends StatelessWidget {
+  const Pipe({
     Key? key,
-    required this.birdY, this.onEnd,
+    required this.pipeX,
+    required this.pipeY,
+    required this.pipeSize,
   }) : super(key: key);
 
-  final double birdY;
-  final Function? onEnd;
+  final double pipeX;
+  final double pipeY;
+  final double pipeSize;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 1000),
-      onEnd: (){
-        onEnd?.call();//?.call的意思是, 如果onEnd他是一個unDefind, 或是none就不執行後面的
-
-      },
-      alignment: Alignment(-0.8,birdY),
+    return Container(
+      alignment: Alignment(pipeX, pipeY),
       child: Container(
-          width: 40,
-          height: 40,
-          child: Image.asset("assets/images/logo.png")),
+        width: 60,
+        height: pipeSize,
+        color: Colors.green,
+      ),
     );
   }
 }
