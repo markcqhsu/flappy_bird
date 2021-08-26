@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flappybird/pipe.dart';
 import 'package:flappybird/score_board.dart';
 import 'package:flappybird/start.dart';
 import 'package:flutter/material.dart';
@@ -41,12 +44,58 @@ class _MyHomePageState extends State<MyHomePage> {
   double pipeOneX = 0.9;
   double gapOneCenter = 0.2;
   double gapTwoCenter = 0;
-  double pipeTwoX = 0.3;
-  // double pipeY = -1;
+  double pipeTwoX = 2.0;
+  int score = 0;
+  late Timer timer;
+  // bool isCrash = false;
+
+
+  bool checkCrash(double center, pipeX){
+    if( pipeX <= -0.75 ){
+      if((birdY > center + 0.25) || (birdY < center - 0.25)){
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   onJumpEnd() {
     setState(() {
       birdY = 1;
+    });
+
+    timer = Timer.periodic(Duration(milliseconds: 50), (timer) {
+      final double newPipeOneX = pipeOneX - 0.02;
+      final double newPipeTwoX = pipeTwoX - 0.02;
+      bool isCrash = false;
+
+      isCrash = checkCrash(gapOneCenter, pipeOneX);
+      isCrash |= checkCrash(gapTwoCenter, pipeTwoX);
+
+      if(pipeOneX < -0.8 || pipeTwoX < -0.8){
+        setState(() {
+          score += 1;
+        });
+      }
+
+      if(isCrash == true){
+        setState(() {
+          isRunning = false;
+          pipeOneX = 0.9;
+          pipeTwoX = 1.4;
+          birdY = 0;
+        });
+
+        timer.cancel();
+
+      }else{
+        setState(() {
+          pipeOneX = newPipeOneX < -1 ? 1.1 : newPipeOneX;
+          pipeTwoX = newPipeTwoX < -1 ? 1.1 : newPipeTwoX;
+        });
+      }
+
     });
   }
 
@@ -71,57 +120,37 @@ class _MyHomePageState extends State<MyHomePage> {
             birdY -= 0.5;
           });
         },
-        child: isRunning
-            ? Column(
-                children: [
-                  Expanded(
-                      flex: 3,
-                      child: Stack(children: [
-                        Pipe(pipeX: pipeOneX, pipeY: -1, pipeSize: maxHeight * (gapOneCenter - 0.25 + 1)/2 ),
-                        Pipe(pipeX: pipeOneX, pipeY: 1, pipeSize: maxHeight *(1-(gapOneCenter + 0.25))/2),
-                        Pipe(pipeX: pipeTwoX, pipeY: -1, pipeSize: maxHeight * (gapTwoCenter - 0.25 + 1)/2),
-                        Pipe(pipeX: pipeTwoX, pipeY: 1, pipeSize: maxHeight *(1-(gapOneCenter + 0.25))/2),
-                        Bird(birdY: birdY, onEnd: onJumpEnd),
-                      ])),
-                  Expanded(
-                    flex: 1,
-                    child: ScoreBoard(),
+        child: Stack(
+              children: [
+                Column(
+                    children: [
+                      Expanded(
+                          flex: 5,
+                          child: Stack(children: [
+                            Pipe(pipeX: pipeOneX, pipeY: -1, pipeSize: maxHeight * (gapOneCenter - 0.25 + 1)/2 ),
+                            Pipe(pipeX: pipeOneX, pipeY: 1, pipeSize: maxHeight *(1- (gapOneCenter + 0.25))/2),
+                            Pipe(pipeX: pipeTwoX, pipeY: -1, pipeSize: maxHeight * (gapTwoCenter - 0.25 + 1)/2),
+                            Pipe(pipeX: pipeTwoX, pipeY: 1, pipeSize: maxHeight *(1-(gapTwoCenter + 0.25))/2),
+                            Bird(birdY: birdY, onEnd: onJumpEnd),
+                          ])),
+                      Expanded(
+                        flex: 1,
+                        child: ScoreBoard(curScore: score,),
+                      ),
+                    ],
                   ),
-                ],
-              )
-            : GestureDetector(
-                onTap: () {
-                  startGame();
-                },
-                child: StartScreen(),
-              ),
+                if(isRunning == false)
+                  GestureDetector(
+                    onTap: () {
+                      startGame();
+                    },
+                    child: StartScreen(),
+                  ),
+              ],
+            )
       ),
       backgroundColor: Colors.white,
     );
   }
 }
 
-class Pipe extends StatelessWidget {
-  const Pipe({
-    Key? key,
-    required this.pipeX,
-    required this.pipeY,
-    required this.pipeSize,
-  }) : super(key: key);
-
-  final double pipeX;
-  final double pipeY;
-  final double pipeSize;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      alignment: Alignment(pipeX, pipeY),
-      child: Container(
-        width: 60,
-        height: pipeSize,
-        color: Colors.green,
-      ),
-    );
-  }
-}

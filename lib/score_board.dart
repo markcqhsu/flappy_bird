@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
 class ScoreBoard extends StatelessWidget {
+  final int curScore;
   const ScoreBoard({
     Key? key,
+    required this.curScore,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage("assets/images/land.png"),
             fit: BoxFit.fitWidth,
@@ -19,16 +21,14 @@ class ScoreBoard extends StatelessWidget {
         children: [
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
+            children:  [
               Text(
                 "分數",
                 style: TextStyle(
                     fontSize: 24.0, color: Colors.white),
               ),
               Text(
-                "16",
-                style: TextStyle(
-                    fontSize: 24.0, color: Colors.white),
+                curScore.toString(),
               ),
             ],
           ),
